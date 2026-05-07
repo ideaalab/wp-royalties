@@ -139,7 +139,7 @@ class IdeaaLab_Royalty_Emails
     public function ajax_handle_manual_send()
     {
         check_ajax_referer('ial_notification_nonce', 'nonce');
-        if (!current_user_can('edit_posts')) {
+        if (!current_user_can('edit_others_posts')) {
             wp_send_json_error('Unauthorized');
         }
 
@@ -170,20 +170,8 @@ class IdeaaLab_Royalty_Emails
         $current_user = wp_get_current_user();
         $to_email = $current_user->user_email;
 
-        $subject = isset($_POST['subject']) ? stripslashes(sanitize_text_field($_POST['subject'])) : 'Test Subject';
-        $body = isset($_POST['body']) ? stripslashes(wp_kses_post($_POST['body'])) : 'Test body content.';
-        $key = isset($_POST['key']) ? sanitize_text_field($_POST['key']) : '';
-
-        // If key (option body name) is provided, update options.
-        if (!empty($key)) {
-            // Update Body option
-            update_option($key, $body);
-
-            $subj_key = str_replace('_body', '_subj', $key);
-            if ($subj_key !== $key) {
-                update_option($subj_key, $subject);
-            }
-        }
+        $subject = isset($_POST['subject']) ? sanitize_text_field(wp_unslash($_POST['subject'])) : 'Test Subject';
+        $body = isset($_POST['body']) ? wp_kses_post(wp_unslash($_POST['body'])) : 'Test body content.';
 
         $my_account_url = function_exists('wc_get_page_permalink') ? wc_get_page_permalink('myaccount') : home_url();
 

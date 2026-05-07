@@ -329,6 +329,9 @@ function ial_save_royalties_meta($post_id)
     if (defined('DOING_AUTOSAVE') && DOING_AUTOSAVE)
         return;
 
+    if (!current_user_can('edit_post', $post_id))
+        return;
+
     // 1. Save Association
     if (isset($_POST['ial_assoc_nonce']) && wp_verify_nonce($_POST['ial_assoc_nonce'], 'ial_save_assoc_meta')) {
         if (isset($_POST['product']))

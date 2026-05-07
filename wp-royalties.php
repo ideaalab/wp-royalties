@@ -2,7 +2,7 @@
 /**
  * Plugin Name:       WP Royalties
  * Description:       Manages product royalties and contributions for collaborators.
- * Version:           3.2.6
+ * Version:           3.2.7
  * Author:            <a href="https://www.ideaalab.com/">IDEAA Lab</a> | <a href="mailto:michaeldide2@gmail.com">Michael Di Desidero</a>
  * License:           GPL v2 or later
  * Text Domain:       ial-royalties
@@ -26,7 +26,7 @@ PucFactory::buildUpdateChecker(
 );
 
 define('IAL_ROYALTIES_PLUGIN_PATH', plugin_dir_path(__FILE__));
-define('IAL_ROYALTIES_VERSION', '3.2.6');
+define('IAL_ROYALTIES_VERSION', '3.2.7');
 
 // Main plugin class for IdeaaLab Royalties.
 final class IdeaaLab_Royalties

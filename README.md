@@ -5,7 +5,7 @@ A specialized financial plugin to automate royalties and commission tracking for
 | | |
 |---|---|
 | **Slug** | `wp-royalties` |
-| **Version** | 3.2.6 |
+| **Version** | 3.2.7 |
 | **Author** | IDEAA Lab — Michael Di Desidero |
 | **Requires WP** | 5.8+ |
 | **Requires PHP** | 7.4+ |
@@ -94,6 +94,13 @@ This plugin ships with [plugin-update-checker](https://github.com/YahnisElsts/pl
 - **Security:** Capability checks (`edit_others_posts`) and nonces for all manual actions and exports.
 
 ## Changelog
+
+### 3.2.7
+
+- **Security:** added missing `current_user_can('edit_post')` check in the meta-box `save_post` handler.
+- **Security:** the *Send Test Email* button no longer silently overwrites the saved template — it now sends only the current editor content without persisting it. Click *Save Changes* explicitly to keep edits.
+- **Security:** the manual *Resend / Send Paid Notification* AJAX endpoint now requires `edit_others_posts` (was `edit_posts`).
+- **Hardening:** correct `wp_unslash()` ordering in the test-email AJAX handler (was `stripslashes` after sanitization).
 
 ### 3.2.6
 

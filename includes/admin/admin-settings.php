@@ -227,8 +227,7 @@ function ial_royalties_render_settings_page()
                     action: 'ial_send_test_email',
                     nonce: '<?php echo wp_create_nonce("ial_test_email_nonce"); ?>',
                     subject: subject,
-                    body: content,
-                    key: editorId
+                    body: content
                 }, function (response) {
                     if (response.success) {
                         alert(response.data);
