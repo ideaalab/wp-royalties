@@ -1,7 +1,7 @@
 <?php
 /**
  * Plugin Name:       WP Royalties
- * Description:       Manages product royalties and contributions for collaborators.
+ * Description:       Automates royalty calculation and payouts for WooCommerce product collaborators.
  * Version:           3.2.7
  * Author:            <a href="https://www.ideaalab.com/">IDEAA Lab</a> | <a href="mailto:michaeldide2@gmail.com">Michael Di Desidero</a>
  * License:           GPL v2 or later
