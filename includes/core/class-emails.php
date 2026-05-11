@@ -8,9 +8,21 @@ if (!defined('ABSPATH')) {
 class IdeaaLab_Royalty_Emails
 {
 
+    private static $instance = null;
+
     private $payment_notification_pending = false;
 
-    public function __construct()
+    // Singleton accessor. Use this instead of `new` so that the hook
+    // listeners are only registered once per request.
+    public static function get_instance()
+    {
+        if (null === self::$instance) {
+            self::$instance = new self();
+        }
+        return self::$instance;
+    }
+
+    private function __construct()
     {
         // Automatic trigger on royalty creation.
         add_action('ial_royalty_record_created', array($this, 'send_creation_notifications'), 10, 1);
@@ -202,4 +214,4 @@ class IdeaaLab_Royalty_Emails
     }
 }
 
-new IdeaaLab_Royalty_Emails();
+IdeaaLab_Royalty_Emails::get_instance();

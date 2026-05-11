@@ -28,7 +28,6 @@ function ial_royalties_handle_bulk_actions($redirect_to, $action, $post_ids)
         wp_die(__('Acción no autorizada.', 'ial-royalties'));
     }
 
-    $email_handler = class_exists('IdeaaLab_Royalty_Emails') ? new IdeaaLab_Royalty_Emails() : null;
     $processed_count = 0;
     $status_changed = false;
 
@@ -42,12 +41,13 @@ function ial_royalties_handle_bulk_actions($redirect_to, $action, $post_ids)
 
         $should_update_note = false;
         $note_to_save = '';
-        $should_send_email = false;
+        $paid_transition = false;
 
         switch ($action) {
             case 'ial_mark_paid':
+                $old_paid = (int) get_post_meta($post_id, 'paid', true);
                 update_post_meta($post_id, 'paid', 1);
-                $should_send_email = true;
+                $paid_transition = (0 === $old_paid);
                 $status_changed = true;
                 break;
 
@@ -62,10 +62,11 @@ function ial_royalties_handle_bulk_actions($redirect_to, $action, $post_ids)
                 break;
 
             case 'ial_pay_and_note':
+                $old_paid = (int) get_post_meta($post_id, 'paid', true);
                 update_post_meta($post_id, 'paid', 1);
+                $paid_transition = (0 === $old_paid);
                 $should_update_note = true;
                 $note_to_save = $incoming_note;
-                $should_send_email = true;
                 $status_changed = true;
                 break;
         }
@@ -77,8 +78,11 @@ function ial_royalties_handle_bulk_actions($redirect_to, $action, $post_ids)
             update_post_meta($post_id, 'notes', $updated_note);
         }
 
-        if ($should_send_email && $email_handler) {
-            $email_handler->send_paid_notifications($post_id);
+        // Fire the same action the meta-box save fires, so any listener
+        // (emails, integrations, etc.) reacts consistently to bulk vs.
+        // per-record edits. Only on real 0→1 transitions to avoid spam.
+        if ($paid_transition) {
+            do_action('ial_royalty_paid_status_changed', $post_id);
         }
 
         $processed_count++;

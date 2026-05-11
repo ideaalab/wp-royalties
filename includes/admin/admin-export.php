@@ -201,6 +201,7 @@ function ial_royalties_handle_export()
                         }
 
                         // Extract Collaborator Name safely
+                        $collab_name = '—';
                         if (is_numeric($collab_data)) {
                             $u = get_userdata($collab_data);
                             if ($u)

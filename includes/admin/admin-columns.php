@@ -355,8 +355,16 @@ function ial_royalties_filter_query($query)
             $meta_query[] = array('key' => 'product', 'value' => sanitize_text_field($_GET['filter_product']), 'compare' => '=');
         }
         if (!empty($_GET['filter_paid'])) {
-            $is_paid = ($_GET['filter_paid'] === 'yes') ? 1 : 0;
-            $meta_query[] = array('key' => 'paid', 'value' => $is_paid, 'compare' => '=');
+            if ($_GET['filter_paid'] === 'yes') {
+                $meta_query[] = array('key' => 'paid', 'value' => 1, 'compare' => '=');
+            } else {
+                // Unpaid = explicit 0 OR no meta at all (legacy records).
+                $meta_query[] = array(
+                    'relation' => 'OR',
+                    array('key' => 'paid', 'compare' => 'NOT EXISTS'),
+                    array('key' => 'paid', 'value' => 1, 'compare' => '!='),
+                );
+            }
         }
         if (!empty($meta_query)) {
             $query->set('meta_query', $meta_query);

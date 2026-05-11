@@ -5,7 +5,7 @@ A specialized financial plugin to automate royalties and commission tracking for
 | | |
 |---|---|
 | **Slug** | `wp-royalties` |
-| **Version** | 3.2.7 |
+| **Version** | 3.2.8 |
 | **Author** | IDEAA Lab — Michael Di Desidero |
 | **Requires WP** | 5.8+ |
 | **Requires PHP** | 7.4+ |
@@ -94,6 +94,15 @@ This plugin ships with [plugin-update-checker](https://github.com/YahnisElsts/pl
 - **Security:** Capability checks (`edit_others_posts`) and nonces for all manual actions and exports.
 
 ## Changelog
+
+### 3.2.8
+
+- **Fix:** `IdeaaLab_Royalty_Emails` is now a singleton; bulk actions no longer instantiate a second copy that double-registered listeners on `ial_royalty_record_created` and `ial_royalty_paid_status_changed`.
+- **Fix:** the *Mark as Paid* / *Mark as Paid & Add Note* bulk actions now fire `do_action('ial_royalty_paid_status_changed', $post_id)` like the meta-box save does — third-party listeners receive bulk events consistently, and the action only fires on real 0→1 transitions to avoid spam.
+- **Fix:** the *Unpaid* admin filter now also matches records that have no `paid` meta at all (legacy / pre-3.x records), matching the menu badge count.
+- **Fix:** initialize `$collab_name` in the Excel export so rows with unresolvable collaborators export as `—` instead of producing a PHP notice and an empty cell.
+- **Cleanup:** remove dead JS validation block for the non-existent `ial_email_campaign` CPT.
+- **Header:** rewrite the `Description:` field to clearly state that the plugin automates royalty calculation and payouts for WooCommerce product collaborators.
 
 ### 3.2.7
 
