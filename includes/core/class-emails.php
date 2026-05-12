@@ -27,8 +27,12 @@ class IdeaaLab_Royalty_Emails
         // Automatic trigger on royalty creation.
         add_action('ial_royalty_record_created', array($this, 'send_creation_notifications'), 10, 1);
 
-        // Automatic trigger when a royalty is marked as paid via meta box
+        // Automatic trigger when a single royalty is marked as paid (meta-box save).
         add_action('ial_royalty_paid_status_changed', array($this, 'send_paid_notifications'), 10, 1);
+
+        // Consolidated trigger when multiple royalties are paid in bulk.
+        // Fires once per collaborator with all their record IDs.
+        add_action('ial_royalty_bulk_paid', array($this, 'send_bulk_paid_notifications'), 10, 3);
 
         // AJAX Handler for manual triggers from admin area.
         add_action('wp_ajax_ial_send_notification', array($this, 'ajax_handle_manual_send'));
@@ -57,6 +61,131 @@ class IdeaaLab_Royalty_Emails
         $this->log("Triggering 'Paid' notifications for Record #{$record_id}.");
         $this->send_email_by_type($record_id, 'paid', 'collaborator');
         $this->send_email_by_type($record_id, 'paid', 'admin');
+    }
+
+    // Send consolidated notification when multiple royalties are paid at once.
+    // Receives one collaborator's user ID, their record IDs, and the payment method.
+    public function send_bulk_paid_notifications($user_id, $record_ids, $payment_method = 'manual')
+    {
+        $count = count($record_ids);
+        $this->log("Triggering bulk-paid notification for User #{$user_id} ({$count} records, method: {$payment_method}).");
+
+        $collaborator = get_userdata($user_id);
+        if (!$collaborator) {
+            $this->log("Error: Collaborator user not found for ID {$user_id}.");
+            return;
+        }
+
+        // Compute totals and build detail rows.
+        $total_amount = 0;
+        $detail_rows = array();
+
+        foreach ($record_ids as $rid) {
+            $amount = (float) get_post_meta($rid, 'royalty_total', true);
+            $total_amount += $amount;
+
+            $prod_id = get_post_meta($rid, 'product', true);
+            $prod_name = $prod_id ? get_the_title($prod_id) : __('Deleted Product', 'ial-royalties');
+            $units = (int) get_post_meta($rid, 'units', true);
+
+            $detail_rows[] = array(
+                'product' => $prod_name,
+                'units'   => $units,
+                'amount'  => $amount,
+            );
+        }
+
+        $records_detail = $this->build_records_detail_table($detail_rows);
+
+        $method_label = ('wallet' === $payment_method)
+            ? __('Wallet', 'ial-royalties')
+            : __('Manual', 'ial-royalties');
+
+        $my_account_url = function_exists('wc_get_page_permalink')
+            ? wc_get_page_permalink('myaccount')
+            : home_url();
+
+        $placeholders = array(
+            '{site_name}'        => get_bloginfo('name'),
+            '{collaborator_name}' => $collaborator->display_name,
+            '{total_amount}'     => wc_price($total_amount),
+            '{record_count}'     => $count,
+            '{payment_method}'   => $method_label,
+            '{records_detail}'   => $records_detail,
+            '{my_account_url}'   => $my_account_url,
+        );
+
+        // --- Collaborator email ---
+        $subj = $this->get_email_template(
+            'ial_email_collab_bulk_paid_subj',
+            '[{site_name}] {record_count} Royalties Paid'
+        );
+        $body = $this->get_email_template(
+            'ial_email_collab_bulk_paid_body',
+            'Hello {collaborator_name},<br><br>{record_count} royalties totaling {total_amount} have been paid ({payment_method}).<br><br>{records_detail}'
+        );
+
+        $this->send_consolidated_email($collaborator->user_email, $subj, $body, $placeholders);
+
+        // --- Admin email ---
+        $subj = $this->get_email_template(
+            'ial_email_admin_bulk_paid_subj',
+            '[{site_name}] {record_count} Royalties Paid to {collaborator_name}'
+        );
+        $body = $this->get_email_template(
+            'ial_email_admin_bulk_paid_body',
+            '{record_count} royalties totaling {total_amount} have been paid to {collaborator_name} ({payment_method}).<br><br>{records_detail}'
+        );
+
+        $this->send_consolidated_email(get_option('admin_email'), $subj, $body, $placeholders);
+    }
+
+    // Build an HTML detail table for the consolidated email.
+    private function build_records_detail_table($rows)
+    {
+        $html = '<table style="border-collapse:collapse; width:100%; max-width:600px; font-size:14px;">';
+        $html .= '<thead><tr style="background:#444; color:#fff;">';
+        $html .= '<th style="padding:8px; text-align:left;">' . esc_html__('Product', 'ial-royalties') . '</th>';
+        $html .= '<th style="padding:8px; text-align:center;">' . esc_html__('Units', 'ial-royalties') . '</th>';
+        $html .= '<th style="padding:8px; text-align:right;">' . esc_html__('Amount', 'ial-royalties') . '</th>';
+        $html .= '</tr></thead><tbody>';
+
+        foreach ($rows as $row) {
+            $html .= '<tr style="border-bottom:1px solid #ddd;">';
+            $html .= '<td style="padding:6px 8px;">' . esc_html($row['product']) . '</td>';
+            $html .= '<td style="padding:6px 8px; text-align:center;">' . esc_html($row['units']) . '</td>';
+            $html .= '<td style="padding:6px 8px; text-align:right;">' . strip_tags(wc_price($row['amount'])) . '</td>';
+            $html .= '</tr>';
+        }
+
+        $html .= '</tbody></table>';
+        return $html;
+    }
+
+    // Send a single consolidated email with the given placeholders.
+    private function send_consolidated_email($to, $subject_template, $body_template, $placeholders)
+    {
+        if (!is_email($to)) {
+            $this->log("Error: Invalid recipient email '{$to}'.");
+            return false;
+        }
+
+        $subject = str_replace(array_keys($placeholders), array_values($placeholders), $subject_template);
+        $body = str_replace(array_keys($placeholders), array_values($placeholders), $body_template);
+
+        $body = str_replace(array('%7Bmy_account_url%7D', '%7bmy_account_url%7d'), $placeholders['{my_account_url}'], $body);
+        $body = ial_sanitize_url($body);
+        $body = wpautop($body);
+
+        $headers = array('Content-Type: text/html; charset=UTF-8');
+        $sent = wp_mail($to, $subject, $body, $headers);
+
+        $this->log($sent
+            ? "Success: bulk-paid email sent to {$to}."
+            : "Error: wp_mail() failed for bulk-paid to {$to}."
+        );
+
+        return $sent;
     }
 
     // Gets an email template from the database, with default fallback.
@@ -187,7 +316,7 @@ class IdeaaLab_Royalty_Emails
 
         $my_account_url = function_exists('wc_get_page_permalink') ? wc_get_page_permalink('myaccount') : home_url();
 
-        // Use dummy data for placeholders.
+        // Use dummy data for placeholders (includes both per-record and bulk placeholders).
         $dummy_placeholders = array(
             '{site_name}' => get_bloginfo('name'),
             '{product_name}' => 'Sample Product',
@@ -195,6 +324,10 @@ class IdeaaLab_Royalty_Emails
             '{amount}' => wc_price(123.45),
             '{units}' => 10,
             '{my_account_url}' => $my_account_url,
+            '{total_amount}' => wc_price(1234.50),
+            '{record_count}' => 10,
+            '{payment_method}' => __('Wallet', 'ial-royalties'),
+            '{records_detail}' => '<em>' . esc_html__('(Detail table will be auto-generated)', 'ial-royalties') . '</em>',
         );
 
         $final_subject = str_replace(array_keys($dummy_placeholders), array_values($dummy_placeholders), $subject);

@@ -171,6 +171,7 @@ function ial_royalties_handle_export()
                     <th><?php esc_html_e('Units', 'ial-royalties'); ?></th>
                     <th><?php esc_html_e('Total Amount (€)', 'ial-royalties'); ?></th>
                     <th><?php esc_html_e('Status', 'ial-royalties'); ?></th>
+                    <th><?php esc_html_e('Payment Method', 'ial-royalties'); ?></th>
                     <th><?php esc_html_e('Notes', 'ial-royalties'); ?></th>
                 </tr>
             </thead>
@@ -189,6 +190,7 @@ function ial_royalties_handle_export()
                         $units = get_post_meta($p_id, 'units', true);
                         $total_raw = get_post_meta($p_id, 'royalty_total', true);
                         $is_paid = get_post_meta($p_id, 'paid', true);
+                        $payment_method_raw = get_post_meta($p_id, 'payment_method', true);
                         $notes = get_post_meta($p_id, 'notes', true);
 
                         $order_display = ($source === 'manual') ? __('Manual', 'ial-royalties') : '#' . $order_id;
@@ -233,12 +235,18 @@ function ial_royalties_handle_export()
                         echo "<td>" . esc_html($prod_name) . "</td>";
                         echo "<td>" . esc_html($units) . "</td>";
                         echo "<td class='num'>" . esc_html($total_formatted) . "</td>";
+                        $method_display = '';
+                        if ($is_paid && $payment_method_raw) {
+                            $method_display = ('wallet' === $payment_method_raw) ? __('Wallet', 'ial-royalties') : __('Manual', 'ial-royalties');
+                        }
+
                         echo "<td class='" . esc_attr($status_class) . "'>" . esc_html($status_label) . "</td>";
+                        echo "<td>" . esc_html($method_display) . "</td>";
                         echo "<td>" . nl2br(esc_html($notes)) . "</td>";
                         echo "</tr>";
                     }
                 } else {
-                    echo '<tr><td colspan="8">' . esc_html__('No records found.', 'ial-royalties') . '</td></tr>';
+                    echo '<tr><td colspan="9">' . esc_html__('No records found.', 'ial-royalties') . '</td></tr>';
                 }
                 ?>
             </tbody>

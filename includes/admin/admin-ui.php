@@ -31,9 +31,23 @@ function ial_royalties_admin_assets()
                 var actionTop = $('select[name=\"action\"]').val();
                 var actionBottom = $('select[name=\"action2\"]').val();
                 var action = ( actionTop !== '-1' ) ? actionTop : actionBottom;
-                if ( action === 'ial_bulk_note' || action === 'ial_pay_and_note' ) {
+
+                // Wallet confirmation
+                if ( action === 'ial_pay_wallet' || action === 'ial_pay_wallet_and_note' ) {
+                    var checked = $('input[name=\"post[]\"]:checked').length;
+                    if ( !confirm('" . esc_js(__('This will credit the collaborators\' wallets. Process', 'ial-royalties')) . " ' + checked + ' " . esc_js(__('records?', 'ial-royalties')) . "') ) {
+                        e.preventDefault();
+                        return false;
+                    }
+                }
+
+                // Note prompt for note actions
+                var noteActions = ['ial_bulk_note', 'ial_pay_and_note', 'ial_pay_wallet_and_note'];
+                if ( noteActions.indexOf(action) !== -1 ) {
                     var promptText = '" . esc_js(__('Enter the note to add:', 'ial-royalties')) . "';
-                    if( action === 'ial_pay_and_note' ) promptText = '" . esc_js(__('Enter the note for the payment:', 'ial-royalties')) . "';
+                    if ( action === 'ial_pay_and_note' || action === 'ial_pay_wallet_and_note' ) {
+                        promptText = '" . esc_js(__('Enter the note for the payment:', 'ial-royalties')) . "';
+                    }
                     var note = prompt( promptText );
                     if ( note != null && note.trim() !== '' ) {
                         $('<input>').attr({ type: 'hidden', name: 'ial_bulk_note_content', value: note }).appendTo('form#posts-filter');

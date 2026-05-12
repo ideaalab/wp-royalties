@@ -302,6 +302,21 @@ function ial_render_record_metabox($post)
             <td>
                 <input type="checkbox" name="paid" id="ial_paid" value="1" <?php checked($paid, 1); ?>>
                 <span class="description"><?php esc_html_e('Mark as paid.', 'ial-royalties'); ?></span>
+                <?php
+                $payment_method = get_post_meta($post->ID, 'payment_method', true);
+                $wsw_tx_id = get_post_meta($post->ID, 'wsw_tx_id', true);
+                if ($payment_method) {
+                    $method_label = ('wallet' === $payment_method)
+                        ? __('Wallet', 'ial-royalties')
+                        : __('Manual', 'ial-royalties');
+                    echo '<br><span class="description" style="margin-top:4px; display:inline-block;">';
+                    printf(esc_html__('Method: %s', 'ial-royalties'), '<strong>' . esc_html($method_label) . '</strong>');
+                    if ($wsw_tx_id) {
+                        printf(' &mdash; WSW TX #%d', intval($wsw_tx_id));
+                    }
+                    echo '</span>';
+                }
+                ?>
             </td>
         </tr>
 
@@ -376,6 +391,14 @@ function ial_save_royalties_meta($post_id)
             update_post_meta($post_id, 'record_source', sanitize_text_field($_POST['record_source']));
 
         update_post_meta($post_id, 'paid', $new_paid);
+
+        // Set payment_method on 0→1 transition when saved from meta-box.
+        if (!$old_paid && $new_paid) {
+            $existing_method = get_post_meta($post_id, 'payment_method', true);
+            if (!$existing_method) {
+                update_post_meta($post_id, 'payment_method', 'manual');
+            }
+        }
 
         if (isset($_POST['notes']))
             update_post_meta($post_id, 'notes', sanitize_textarea_field($_POST['notes']));
