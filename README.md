@@ -5,7 +5,7 @@ A specialized financial plugin to automate royalties and commission tracking for
 | | |
 |---|---|
 | **Slug** | `wp-royalties` |
-| **Version** | 3.2.8 |
+| **Version** | 3.3.0 |
 | **Author** | IDEAA Lab — Michael Di Desidero |
 | **Requires WP** | 5.8+ |
 | **Requires PHP** | 7.4+ |
@@ -94,6 +94,15 @@ This plugin ships with [plugin-update-checker](https://github.com/YahnisElsts/pl
 - **Security:** Capability checks (`edit_others_posts`) and nonces for all manual actions and exports.
 
 ## Changelog
+
+### 3.3.0
+
+- **Feature:** WP Simple Wallet integration — new *Pay to Wallet* and *Pay to Wallet & Note* bulk actions that credit collaborators' wallets via `wsw_credit()`. Actions appear only when WSW is installed and active.
+- **Feature:** Consolidated bulk payment emails — batch payouts now send **one summary email per collaborator** (instead of one per record) with a detail table of products, units, and amounts.
+- **Feature:** Payment traceability — new `payment_method` (manual / wallet) and `wsw_tx_id` meta stored on each royalty record.
+- **Feature:** Four new customizable email templates for bulk payment notifications in *Royalties > Settings*, with new placeholders: `{total_amount}`, `{record_count}`, `{payment_method}`, `{records_detail}`.
+- **UI:** Admin columns show "Wallet" label next to the paid indicator. Meta-box displays payment method and WSW transaction ID. Excel export includes a new *Payment Method* column.
+- **UX:** Wallet bulk actions show a confirmation dialog before processing. Already-paid and duplicate records are skipped with informative admin notices.
 
 ### 3.2.8
 
