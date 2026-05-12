@@ -29,7 +29,9 @@ function ial_royalties_register_settings()
         'collab_created_body' => "Hello {collaborator_name},<br><br>A new royalty of {amount} has been registered for the sale of {units} units of <strong>{product_name}</strong>.",
         'admin_created_body' => "A new royalty of {amount} has been created for {collaborator_name} for the product {product_name}.",
         'collab_paid_body' => "Hello {collaborator_name},<br><br>A royalty payment of {amount} has been processed for <strong>{product_name}</strong>.",
-        'admin_paid_body' => "The royalty of {amount} for {collaborator_name} ({product_name}) has been marked as paid."
+        'admin_paid_body' => "The royalty of {amount} for {collaborator_name} ({product_name}) has been marked as paid.",
+        'collab_bulk_paid_body' => "Hello {collaborator_name},<br><br>{record_count} royalties totaling {total_amount} have been paid ({payment_method}).<br><br>{records_detail}",
+        'admin_bulk_paid_body' => "{record_count} royalties totaling {total_amount} have been paid to {collaborator_name} ({payment_method}).<br><br>{records_detail}"
     );
 
     $email_fields = array(
@@ -40,7 +42,11 @@ function ial_royalties_register_settings()
         'ial_email_collab_paid_subj',
         'ial_email_collab_paid_body',
         'ial_email_admin_paid_subj',
-        'ial_email_admin_paid_body'
+        'ial_email_admin_paid_body',
+        'ial_email_collab_bulk_paid_subj',
+        'ial_email_collab_bulk_paid_body',
+        'ial_email_admin_bulk_paid_subj',
+        'ial_email_admin_bulk_paid_body',
     );
 
     foreach ($email_fields as $field) {
@@ -60,6 +66,13 @@ function ial_royalties_register_settings()
 
     add_settings_field('ial_email_admin_paid_subj', 'Admin: Payment Sent (Subject)', 'ial_render_text_input', 'ial-royalties-settings', 'ial_royalties_email_settings', array('id' => 'ial_email_admin_paid_subj'));
     add_settings_field('ial_email_admin_paid_body', 'Admin: Payment Sent (Body)', 'ial_render_visual_editor', 'ial-royalties-settings', 'ial_royalties_email_settings', array('id' => 'ial_email_admin_paid_body', 'default_text' => $defaults['admin_paid_body']));
+
+    // Bulk Paid templates (consolidated emails for batch payouts).
+    add_settings_field('ial_email_collab_bulk_paid_subj', 'Collaborator: Bulk Payment (Subject)', 'ial_render_text_input', 'ial-royalties-settings', 'ial_royalties_email_settings', array('id' => 'ial_email_collab_bulk_paid_subj'));
+    add_settings_field('ial_email_collab_bulk_paid_body', 'Collaborator: Bulk Payment (Body)', 'ial_render_visual_editor', 'ial-royalties-settings', 'ial_royalties_email_settings', array('id' => 'ial_email_collab_bulk_paid_body', 'default_text' => $defaults['collab_bulk_paid_body']));
+
+    add_settings_field('ial_email_admin_bulk_paid_subj', 'Admin: Bulk Payment (Subject)', 'ial_render_text_input', 'ial-royalties-settings', 'ial_royalties_email_settings', array('id' => 'ial_email_admin_bulk_paid_subj'));
+    add_settings_field('ial_email_admin_bulk_paid_body', 'Admin: Bulk Payment (Body)', 'ial_render_visual_editor', 'ial-royalties-settings', 'ial_royalties_email_settings', array('id' => 'ial_email_admin_bulk_paid_body', 'default_text' => $defaults['admin_bulk_paid_body']));
 }
 add_action('admin_init', 'ial_royalties_register_settings');
 
@@ -89,6 +102,14 @@ function ial_royalties_email_section_desc()
             <li><code>{amount}</code> : Royalty Amount</li>
             <li><code>{units}</code> : Units Sold</li>
             <li><code>{my_account_url}</code> : My Account Link</li>
+        </ul>
+        <p><strong><?php esc_html_e('Additional placeholders for Bulk Payment templates:', 'ial-royalties'); ?></strong></p>
+        <ul
+            style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 10px; margin-top: 10px; margin-bottom: 20px;">
+            <li><code>{total_amount}</code> : Total amount (sum)</li>
+            <li><code>{record_count}</code> : Number of records</li>
+            <li><code>{payment_method}</code> : Payment method (Manual / Wallet)</li>
+            <li><code>{records_detail}</code> : Detail table (auto-generated)</li>
         </ul>
 
         <div style="background: #fff; border-left: 4px solid #72aee6; padding: 10px; font-size: 13px;">

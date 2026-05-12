@@ -278,7 +278,15 @@ function ial_royalties_record_admin_columns_data($column, $post_id)
 
         case 'paid':
             $is_paid = get_post_meta($post_id, 'paid', true);
-            echo $is_paid ? '<span class="dashicons dashicons-yes" style="color:green"></span>' : '<span class="dashicons dashicons-no" style="color:red"></span>';
+            if ($is_paid) {
+                echo '<span class="dashicons dashicons-yes" style="color:green"></span>';
+                $method = get_post_meta($post_id, 'payment_method', true);
+                if ('wallet' === $method) {
+                    echo ' <small style="color:#555;">Wallet</small>';
+                }
+            } else {
+                echo '<span class="dashicons dashicons-no" style="color:red"></span>';
+            }
             break;
 
         case 'notes':
