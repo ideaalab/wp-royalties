@@ -24,6 +24,17 @@ function ial_royalties_process_wallet_payout($user_id, $record_ids)
         return new WP_Error('wsw_unavailable', __('WP Simple Wallet is not available.', 'ial-royalties'));
     }
 
+    // Auto-activate wallet if the collaborator doesn't have one yet.
+    // The admin explicitly chose to pay to wallet, so creating it is
+    // a necessary prerequisite — not a side-effect.
+    $wallet_created = false;
+    if (function_exists('wsw_is_active') && !wsw_is_active($user_id)) {
+        if (function_exists('wsw_set_active')) {
+            wsw_set_active($user_id, true);
+            $wallet_created = true;
+        }
+    }
+
     // --- Build detailed note and compute total ---
     $total_amount = 0;
     $note_lines = array();
@@ -87,9 +98,10 @@ function ial_royalties_process_wallet_payout($user_id, $record_ids)
     }
 
     return array(
-        'tx_id' => $wsw_tx_id,
-        'total' => $total_amount,
-        'count' => count($record_ids),
+        'tx_id'          => $wsw_tx_id,
+        'total'          => $total_amount,
+        'count'          => count($record_ids),
+        'wallet_created' => $wallet_created,
     );
 }
 
@@ -156,7 +168,7 @@ function ial_royalties_handle_bulk_actions($redirect_to, $action, $post_ids)
     }
 
     $redirect_to = remove_query_arg(
-        array('ial_bulk_processed', 'ial_bulk_skipped', 'ial_bulk_errors'),
+        array('ial_bulk_processed', 'ial_bulk_skipped', 'ial_bulk_errors', 'ial_wallets_created'),
         $redirect_to
     );
 
@@ -175,6 +187,7 @@ function ial_royalties_handle_bulk_actions($redirect_to, $action, $post_ids)
     $processed = 0;
     $skipped = 0;
     $errors = 0;
+    $wallets_created = 0;
     $status_changed = false;
 
     // --- Non-payment actions ---
@@ -222,12 +235,15 @@ function ial_royalties_handle_bulk_actions($redirect_to, $action, $post_ids)
         foreach ($grouped as $user_id => $record_ids) {
 
             if ($is_wallet) {
-                // --- Wallet payout via shared helper ---
                 $result = ial_royalties_process_wallet_payout($user_id, $record_ids);
 
                 if (is_wp_error($result)) {
                     $errors += count($record_ids);
                     continue;
+                }
+
+                if (!empty($result['wallet_created'])) {
+                    $wallets_created++;
                 }
 
             } else {
@@ -265,6 +281,9 @@ function ial_royalties_handle_bulk_actions($redirect_to, $action, $post_ids)
     if ($errors > 0) {
         $args['ial_bulk_errors'] = $errors;
     }
+    if ($wallets_created > 0) {
+        $args['ial_wallets_created'] = $wallets_created;
+    }
 
     return add_query_arg($args, $redirect_to);
 }
@@ -297,7 +316,7 @@ function ial_royalties_handle_assoc_bulk_actions($redirect_to, $action, $post_id
     }
 
     $redirect_to = remove_query_arg(
-        array('ial_bulk_processed', 'ial_bulk_skipped', 'ial_bulk_errors'),
+        array('ial_bulk_processed', 'ial_bulk_skipped', 'ial_bulk_errors', 'ial_wallets_created'),
         $redirect_to
     );
 
@@ -308,6 +327,7 @@ function ial_royalties_handle_assoc_bulk_actions($redirect_to, $action, $post_id
     $processed = 0;
     $no_pending = 0;
     $errors = 0;
+    $wallets_created = 0;
 
     // 1. Collect all unpaid records from the selected associations,
     //    grouped by collaborator.
@@ -379,6 +399,10 @@ function ial_royalties_handle_assoc_bulk_actions($redirect_to, $action, $post_id
             continue;
         }
 
+        if (!empty($result['wallet_created'])) {
+            $wallets_created++;
+        }
+
         $processed += $result['count'];
         do_action('ial_royalty_bulk_paid', $user_id, $record_ids, 'wallet');
     }
@@ -396,6 +420,9 @@ function ial_royalties_handle_assoc_bulk_actions($redirect_to, $action, $post_id
     }
     if ($errors > 0) {
         $args['ial_bulk_errors'] = $errors;
+    }
+    if ($wallets_created > 0) {
+        $args['ial_wallets_created'] = $wallets_created;
     }
 
     return add_query_arg($args, $redirect_to);
@@ -427,6 +454,13 @@ function ial_royalties_bulk_admin_notice()
         printf(
             '<div id="message" class="notice notice-error is-dismissible"><p>%s</p></div>',
             sprintf(esc_html__('%d registros no pudieron procesarse (error de wallet).', 'ial-royalties'), $count)
+        );
+    }
+    if (!empty($_REQUEST['ial_wallets_created'])) {
+        $count = intval($_REQUEST['ial_wallets_created']);
+        printf(
+            '<div id="message" class="notice notice-info is-dismissible"><p>%s</p></div>',
+            sprintf(esc_html__('Se crearon wallets para %d colaboradores que no tenían.', 'ial-royalties'), $count)
         );
     }
 }
