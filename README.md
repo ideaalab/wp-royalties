@@ -5,7 +5,7 @@ A specialized financial plugin to automate royalties and commission tracking for
 | | |
 |---|---|
 | **Slug** | `wp-royalties` |
-| **Version** | 3.3.0 |
+| **Version** | 3.3.1 |
 | **Author** | IDEAA Lab — Michael Di Desidero |
 | **Requires WP** | 5.8+ |
 | **Requires PHP** | 7.4+ |
@@ -94,6 +94,14 @@ This plugin ships with [plugin-update-checker](https://github.com/YahnisElsts/pl
 - **Security:** Capability checks (`edit_others_posts`) and nonces for all manual actions and exports.
 
 ## Changelog
+
+### 3.3.1
+
+- **Feature:** New *Pay Pending to Wallet* bulk action on the **Associations** list — select one or more rules and pay all their unpaid royalties to the collaborator's wallet in one click.
+- **Improvement:** WSW transaction notes now list each record with its ID (`RR#`), order reference, product name, units, and amount for full traceability.
+- **Fix:** Stale admin notice params (`ial_bulk_errors`, etc.) from a previous bulk action no longer bleed into the next redirect URL.
+- **Fix:** Removed the `wsw_is_active()` pre-check — `wsw_credit()` handles its own validation; the is-active flag is a front-end concern, not relevant when an admin pays royalties.
+- **Refactor:** Extracted `ial_royalties_process_wallet_payout()` shared helper used by both Records and Associations bulk handlers.
 
 ### 3.3.0
 

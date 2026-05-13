@@ -2,7 +2,7 @@
 /**
  * Plugin Name:       WP Royalties
  * Description:       Automates royalty calculation and payouts for WooCommerce product collaborators.
- * Version:           3.3.0
+ * Version:           3.3.1
  * Author:            <a href="https://www.ideaalab.com/">IDEAA Lab</a> | <a href="mailto:michaeldide2@gmail.com">Michael Di Desidero</a>
  * License:           GPL v2 or later
  * Text Domain:       ial-royalties
@@ -26,7 +26,7 @@ PucFactory::buildUpdateChecker(
 );
 
 define('IAL_ROYALTIES_PLUGIN_PATH', plugin_dir_path(__FILE__));
-define('IAL_ROYALTIES_VERSION', '3.3.0');
+define('IAL_ROYALTIES_VERSION', '3.3.1');
 
 // Main plugin class for IdeaaLab Royalties.
 final class IdeaaLab_Royalties
