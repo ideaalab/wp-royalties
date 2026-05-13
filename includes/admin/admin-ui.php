@@ -61,6 +61,26 @@ function ial_royalties_admin_assets()
         wp_add_inline_script('jquery-core', $script);
     }
 
+    // 2b. JS for Association Bulk Actions (Pay Pending to Wallet)
+    if ($screen->post_type === 'ial_user_prod_assoc' && $pagenow === 'edit.php') {
+        $assoc_script = "
+        jQuery(document).ready(function($){
+            $('form#posts-filter').submit(function(e){
+                var actionTop = $('select[name=\"action\"]').val();
+                var actionBottom = $('select[name=\"action2\"]').val();
+                var action = ( actionTop !== '-1' ) ? actionTop : actionBottom;
+                if ( action === 'ial_assoc_pay_wallet' ) {
+                    var checked = $('input[name=\"post[]\"]:checked').length;
+                    if ( !confirm('" . esc_js(__('This will pay ALL pending royalties for the selected associations to the collaborators\' wallets. Process', 'ial-royalties')) . " ' + checked + ' " . esc_js(__('associations?', 'ial-royalties')) . "') ) {
+                        e.preventDefault();
+                        return false;
+                    }
+                }
+            });
+        });";
+        wp_add_inline_script('jquery-core', $assoc_script);
+    }
+
     // 3. JS for Edit Screen Buttons
     if ($screen->post_type === 'ial_royalty_record' && $pagenow === 'post.php') {
         wp_enqueue_script('ial-admin-validation', plugin_dir_url(__FILE__) . '../../assets/js/admin-validation.js', array('jquery'), '1.0', true);
