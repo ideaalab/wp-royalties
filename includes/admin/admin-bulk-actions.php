@@ -37,6 +37,13 @@ function ial_royalties_handle_bulk_actions($redirect_to, $action, $post_ids)
         return $redirect_to;
     }
 
+    // Strip stale notice params from the referer URL so previous
+    // results don't bleed into the current redirect.
+    $redirect_to = remove_query_arg(
+        array('ial_bulk_processed', 'ial_bulk_skipped', 'ial_bulk_errors'),
+        $redirect_to
+    );
+
     if (!current_user_can('edit_others_posts')) {
         wp_die(__('Acción no autorizada.', 'ial-royalties'));
     }
@@ -110,11 +117,6 @@ function ial_royalties_handle_bulk_actions($redirect_to, $action, $post_ids)
 
             // --- Wallet credit ---
             if ($is_wallet) {
-                if (!function_exists('wsw_is_active') || !wsw_is_active($user_id)) {
-                    $errors += count($record_ids);
-                    continue;
-                }
-
                 $total_amount = 0;
                 foreach ($record_ids as $rid) {
                     $total_amount += (float) get_post_meta($rid, 'royalty_total', true);
