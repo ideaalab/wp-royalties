@@ -5,7 +5,7 @@ A specialized financial plugin to automate royalties and commission tracking for
 | | |
 |---|---|
 | **Slug** | `wp-royalties` |
-| **Version** | 3.3.1 |
+| **Version** | 3.3.2 |
 | **Author** | IDEAA Lab — Michael Di Desidero |
 | **Requires WP** | 5.8+ |
 | **Requires PHP** | 7.4+ |
@@ -94,6 +94,11 @@ This plugin ships with [plugin-update-checker](https://github.com/YahnisElsts/pl
 - **Security:** Capability checks (`edit_others_posts`) and nonces for all manual actions and exports.
 
 ## Changelog
+
+### 3.3.2
+
+- **Fix:** Auto-create wallet for collaborators that don't have one when paying to wallet, instead of silently creating orphan transactions.
+- **UI:** Info notice shown when wallets are auto-created during a payout.
 
 ### 3.3.1
 
