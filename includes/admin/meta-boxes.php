@@ -168,6 +168,7 @@ function ial_render_record_metabox($post)
 {
     wp_nonce_field('ial_save_record_meta', 'ial_record_nonce');
 
+    $assoc_id = get_post_meta($post->ID, 'association', true);
     $collaborator_user = get_post_meta($post->ID, 'collaborator_user', true);
     $product_id = get_post_meta($post->ID, 'product', true);
     $order_id = get_post_meta($post->ID, 'order', true);
@@ -197,8 +198,33 @@ function ial_render_record_metabox($post)
             $source = 'manual';
     }
 
-    $users = get_users(array('orderby' => 'display_name'));
-    $products = get_posts(array('post_type' => 'product', 'numberposts' => -1, 'orderby' => 'title', 'order' => 'ASC', 'post_status' => 'publish'));
+    // Build associations list for dropdown
+    $associations = get_posts(array(
+        'post_type' => 'ial_user_prod_assoc',
+        'numberposts' => -1,
+        'post_status' => 'publish',
+        'orderby' => 'title',
+        'order' => 'ASC',
+    ));
+    $assoc_options = array();
+    foreach ($associations as $a) {
+        $a_user_id = get_post_meta($a->ID, 'collaborator_user', true);
+        $a_prod_id = get_post_meta($a->ID, 'product', true);
+        $a_user = $a_user_id ? get_userdata($a_user_id) : null;
+        $a_prod = $a_prod_id ? get_the_title($a_prod_id) : '—';
+        $a_label = ($a_user ? $a_user->display_name : '—') . ' — ' . $a_prod;
+        $assoc_options[] = array('id' => $a->ID, 'label' => $a_label, 'user' => $a_user_id, 'product' => $a_prod_id);
+    }
+
+    // For legacy records without stored association, match by user+product
+    if (!$assoc_id && $collaborator_user && $product_id) {
+        foreach ($assoc_options as $opt) {
+            if ($opt['user'] == $collaborator_user && $opt['product'] == $product_id) {
+                $assoc_id = $opt['id'];
+                break;
+            }
+        }
+    }
 
     ?>
     <script>
@@ -218,27 +244,16 @@ function ial_render_record_metabox($post)
 
     <table class="form-table">
         <tr>
-            <th><label for="ial_collaborator_user"><?php esc_html_e('Collaborator', 'ial-royalties'); ?> *</label></th>
+            <th><label for="ial_association"><?php esc_html_e('Association', 'ial-royalties'); ?> *</label></th>
             <td>
-                <select name="collaborator_user" id="ial_collaborator_user" class="regular-text" required>
-                    <option value=""><?php esc_html_e('-- Select User --', 'ial-royalties'); ?></option>
-                    <?php foreach ($users as $u): ?>
-                        <option value="<?php echo esc_attr($u->ID); ?>" <?php selected($collaborator_user, $u->ID); ?>>
-                            <?php echo esc_html($u->display_name); ?> (<?php echo esc_html($u->user_email); ?>)
-                        </option>
-                    <?php endforeach; ?>
-                </select>
-            </td>
-        </tr>
-
-        <tr>
-            <th><label for="ial_product"><?php esc_html_e('Product', 'ial-royalties'); ?> *</label></th>
-            <td>
-                <select name="product" id="ial_product" class="regular-text" required>
-                    <option value=""><?php esc_html_e('-- Select Product --', 'ial-royalties'); ?></option>
-                    <?php foreach ($products as $p): ?>
-                        <option value="<?php echo esc_attr($p->ID); ?>" <?php selected($product_id, $p->ID); ?>>
-                            <?php echo esc_html($p->post_title); ?>
+                <select name="association" id="ial_association" class="regular-text" required>
+                    <option value=""><?php esc_html_e('-- Select Association --', 'ial-royalties'); ?></option>
+                    <?php foreach ($assoc_options as $opt): ?>
+                        <option value="<?php echo esc_attr($opt['id']); ?>"
+                            data-user="<?php echo esc_attr($opt['user']); ?>"
+                            data-product="<?php echo esc_attr($opt['product']); ?>"
+                            <?php selected($assoc_id, $opt['id']); ?>>
+                            <?php echo esc_html($opt['label']); ?>
                         </option>
                     <?php endforeach; ?>
                 </select>
@@ -370,10 +385,16 @@ function ial_save_royalties_meta($post_id)
         $old_paid = get_post_meta($post_id, 'paid', true);
         $new_paid = isset($_POST['paid']) ? 1 : 0;
 
-        if (isset($_POST['collaborator_user']))
-            update_post_meta($post_id, 'collaborator_user', sanitize_text_field($_POST['collaborator_user']));
-        if (isset($_POST['product']))
-            update_post_meta($post_id, 'product', sanitize_text_field($_POST['product']));
+        if (isset($_POST['association'])) {
+            $assoc_id = absint($_POST['association']);
+            update_post_meta($post_id, 'association', $assoc_id);
+            $assoc_user = get_post_meta($assoc_id, 'collaborator_user', true);
+            $assoc_prod = get_post_meta($assoc_id, 'product', true);
+            if ($assoc_user)
+                update_post_meta($post_id, 'collaborator_user', $assoc_user);
+            if ($assoc_prod)
+                update_post_meta($post_id, 'product', $assoc_prod);
+        }
         if (isset($_POST['order']))
             update_post_meta($post_id, 'order', sanitize_text_field($_POST['order']));
         if (isset($_POST['units']))
@@ -406,5 +427,17 @@ function ial_save_royalties_meta($post_id)
         if (!$old_paid && $new_paid) {
             do_action('ial_royalty_paid_status_changed', $post_id);
         }
+
+        // Auto-generate title from association data
+        $user_id = get_post_meta($post_id, 'collaborator_user', true);
+        $prod_id = get_post_meta($post_id, 'product', true);
+        $user = $user_id ? get_userdata($user_id) : null;
+        $prod_name = $prod_id ? get_the_title($prod_id) : '';
+        $title = 'Royalty';
+        if ($user) $title .= ' — ' . $user->display_name;
+        if ($prod_name) $title .= ' — ' . $prod_name;
+        remove_action('save_post', 'ial_save_royalties_meta');
+        wp_update_post(array('ID' => $post_id, 'post_title' => $title));
+        add_action('save_post', 'ial_save_royalties_meta');
     }
 }

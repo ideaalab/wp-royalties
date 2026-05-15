@@ -5,7 +5,7 @@ A specialized financial plugin to automate royalties and commission tracking for
 | | |
 |---|---|
 | **Slug** | `wp-royalties` |
-| **Version** | 3.3.3 |
+| **Version** | 3.3.4 |
 | **Author** | IDEAA Lab — Michael Di Desidero |
 | **Requires WP** | 5.8+ |
 | **Requires PHP** | 7.4+ |
@@ -94,6 +94,12 @@ This plugin ships with [plugin-update-checker](https://github.com/YahnisElsts/pl
 - **Security:** Capability checks (`edit_others_posts`) and nonces for all manual actions and exports.
 
 ## Changelog
+
+### 3.3.4
+
+- **UI:** Replace separate Collaborator and Product dropdowns with a single Association picker when creating/editing royalty records.
+- **UI:** Auto-generate record title (`Royalty — User — Product`) on save; title field removed from editor.
+- **UI:** Disable Quick Edit for royalty records (default WordPress fields are not relevant).
 
 ### 3.3.3
 

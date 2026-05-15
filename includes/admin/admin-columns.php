@@ -297,6 +297,15 @@ function ial_royalties_record_admin_columns_data($column, $post_id)
 }
 add_action('manage_ial_royalty_record_posts_custom_column', 'ial_royalties_record_admin_columns_data', 10, 2);
 
+function ial_royalties_disable_quick_edit($actions, $post)
+{
+    if ($post->post_type === 'ial_royalty_record') {
+        unset($actions['inline hide-if-no-js']);
+    }
+    return $actions;
+}
+add_filter('post_row_actions', 'ial_royalties_disable_quick_edit', 10, 2);
+
 // FILTERS
 function ial_royalties_add_admin_filters($post_type, $which)
 {

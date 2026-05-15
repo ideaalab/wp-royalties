@@ -50,7 +50,7 @@ function ial_register_royalty_cpts()
         'public' => false,
         'show_ui' => true,
         'show_in_menu' => 'edit.php?post_type=ial_user_prod_assoc',
-        'supports' => array('title', 'custom-fields'),
+        'supports' => array('custom-fields'),
         'capability_type' => 'post',
         'map_meta_cap' => true,
         'description' => __('Logs each royalty transaction generated from a WooCommerce order.', 'ial-royalties'),
