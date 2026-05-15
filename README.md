@@ -5,7 +5,7 @@ A specialized financial plugin to automate royalties and commission tracking for
 | | |
 |---|---|
 | **Slug** | `wp-royalties` |
-| **Version** | 3.3.2 |
+| **Version** | 3.3.3 |
 | **Author** | IDEAA Lab — Michael Di Desidero |
 | **Requires WP** | 5.8+ |
 | **Requires PHP** | 7.4+ |
@@ -94,6 +94,10 @@ This plugin ships with [plugin-update-checker](https://github.com/YahnisElsts/pl
 - **Security:** Capability checks (`edit_others_posts`) and nonces for all manual actions and exports.
 
 ## Changelog
+
+### 3.3.3
+
+- **UI:** Swap separators in WSW transaction notes — `|` now separates records, `•` separates values within each record for better readability.
 
 ### 3.3.2
 

@@ -54,7 +54,7 @@ function ial_royalties_process_wallet_payout($user_id, $record_ids)
             : (($order_id) ? '#' . $order_id : '—');
 
         $note_lines[] = sprintf(
-            '• RR#%d | %s %s | %s | %d %s | %s',
+            '| RR#%d • %s %s • %s • %d %s • %s',
             $rid,
             __('Order', 'ial-royalties'),
             $order_ref,
