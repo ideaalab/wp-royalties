@@ -213,7 +213,21 @@ function ial_render_record_metabox($post)
         $a_user = $a_user_id ? get_userdata($a_user_id) : null;
         $a_prod = $a_prod_id ? get_the_title($a_prod_id) : '—';
         $a_label = ($a_user ? $a_user->display_name : '—') . ' — ' . $a_prod;
-        $assoc_options[] = array('id' => $a->ID, 'label' => $a_label, 'user' => $a_user_id, 'product' => $a_prod_id);
+        $a_type = get_post_meta($a->ID, 'royalty_type', true);
+        $a_rate = 0;
+        $a_rate_label = '';
+        if ('fixed' === $a_type || 'fixed_per_unit' === $a_type) {
+            $a_rate = (float) get_post_meta($a->ID, 'royalty_amount_fixed', true);
+            $a_rate_label = strip_tags(wc_price($a_rate));
+        } elseif ('percentage' === $a_type) {
+            $a_rate = (float) get_post_meta($a->ID, 'royalty_amount_percentage', true);
+            $a_base = get_post_meta($a->ID, 'royalty_percentage_base', true);
+            $a_rate_label = $a_rate . '% (' . ('net' === $a_base ? __('neto', 'ial-royalties') : __('bruto', 'ial-royalties')) . ')';
+        }
+        $assoc_options[] = array(
+            'id' => $a->ID, 'label' => $a_label, 'user' => $a_user_id, 'product' => $a_prod_id,
+            'type' => $a_type, 'rate' => $a_rate, 'rate_label' => $a_rate_label,
+        );
     }
 
     // For legacy records without stored association, match by user+product
@@ -239,6 +253,22 @@ function ial_render_record_metabox($post)
             }
             $('input[name="record_source"]').on('change', toggleSourceInputs);
             toggleSourceInputs();
+
+            function updateRateHint() {
+                var sel = $('#ial_association option:selected');
+                var label = sel.data('rate-label');
+                $('#ial_rate_hint').text(label ? '<?php echo esc_js(__('Standard:', 'ial-royalties')); ?> ' + label : '');
+            }
+            function updateTotalHint() {
+                var units = parseFloat($('#ial_units').val()) || 0;
+                var perUnit = parseFloat($('#ial_royalty_per_unit').val()) || 0;
+                var calc = units * perUnit;
+                $('#ial_total_hint').text(calc > 0 ? '<?php echo esc_js(__('Calculated:', 'ial-royalties')); ?> ' + calc.toFixed(2) : '');
+            }
+            $('#ial_association').on('change', updateRateHint);
+            $('#ial_units, #ial_royalty_per_unit').on('input change', updateTotalHint);
+            updateRateHint();
+            updateTotalHint();
         });
     </script>
 
@@ -252,6 +282,9 @@ function ial_render_record_metabox($post)
                         <option value="<?php echo esc_attr($opt['id']); ?>"
                             data-user="<?php echo esc_attr($opt['user']); ?>"
                             data-product="<?php echo esc_attr($opt['product']); ?>"
+                            data-type="<?php echo esc_attr($opt['type']); ?>"
+                            data-rate="<?php echo esc_attr($opt['rate']); ?>"
+                            data-rate-label="<?php echo esc_attr($opt['rate_label']); ?>"
                             <?php selected($assoc_id, $opt['id']); ?>>
                             <?php echo esc_html($opt['label']); ?>
                         </option>
@@ -294,14 +327,20 @@ function ial_render_record_metabox($post)
 
         <tr>
             <th><label for="ial_royalty_per_unit"><?php esc_html_e('Royalty per Unit', 'ial-royalties'); ?></label></th>
-            <td><input type="number" step="0.01" name="royalty_per_unit" id="ial_royalty_per_unit"
-                    value="<?php echo esc_attr($per_unit); ?>" class="small-text"></td>
+            <td>
+                <input type="number" step="0.01" name="royalty_per_unit" id="ial_royalty_per_unit"
+                    value="<?php echo esc_attr($per_unit); ?>" class="small-text">
+                <span id="ial_rate_hint" class="description" style="margin-left:6px;"></span>
+            </td>
         </tr>
 
         <tr>
             <th><label for="ial_royalty_total"><?php esc_html_e('Royalty Total', 'ial-royalties'); ?></label></th>
-            <td><input type="number" step="0.01" name="royalty_total" id="ial_royalty_total"
-                    value="<?php echo esc_attr($total); ?>" class="small-text"></td>
+            <td>
+                <input type="number" step="0.01" name="royalty_total" id="ial_royalty_total"
+                    value="<?php echo esc_attr($total); ?>" class="small-text">
+                <span id="ial_total_hint" class="description" style="margin-left:6px;"></span>
+            </td>
         </tr>
 
         <tr>

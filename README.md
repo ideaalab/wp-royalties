@@ -5,7 +5,7 @@ A specialized financial plugin to automate royalties and commission tracking for
 | | |
 |---|---|
 | **Slug** | `wp-royalties` |
-| **Version** | 3.3.4 |
+| **Version** | 3.3.5 |
 | **Author** | IDEAA Lab — Michael Di Desidero |
 | **Requires WP** | 5.8+ |
 | **Requires PHP** | 7.4+ |
@@ -94,6 +94,11 @@ This plugin ships with [plugin-update-checker](https://github.com/YahnisElsts/pl
 - **Security:** Capability checks (`edit_others_posts`) and nonces for all manual actions and exports.
 
 ## Changelog
+
+### 3.3.5
+
+- **UI:** Show standard rate hint next to "Royalty per Unit" and calculated total hint next to "Royalty Total" when creating manual records.
+- **UI:** Rename "Publish" to "Create" for new royalty records; add "Create & New" and "Create & Close" buttons.
 
 ### 3.3.4
 

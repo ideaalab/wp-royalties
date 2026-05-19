@@ -81,6 +81,32 @@ function ial_royalties_admin_assets()
         wp_add_inline_script('jquery-core', $assoc_script);
     }
 
+    // 2c. Customize publish box for new royalty records
+    if ($screen->post_type === 'ial_royalty_record' && $pagenow === 'post-new.php') {
+        $new_url = admin_url('post-new.php?post_type=ial_royalty_record');
+        $list_url = admin_url('edit.php?post_type=ial_royalty_record');
+        $create_script = "
+        jQuery(document).ready(function($){
+            // Rename Publish button to Create
+            $('#publish').val('" . esc_js(__('Create', 'ial-royalties')) . "');
+
+            // Add extra buttons after the publish button
+            var btnHtml = '<div style=\"margin-top:8px; display:flex; gap:6px;\">';
+            btnHtml += '<button type=\"button\" id=\"ial_create_and_new\" class=\"button\" style=\"flex:1;\">" . esc_js(__('Create & New', 'ial-royalties')) . "</button>';
+            btnHtml += '<button type=\"button\" id=\"ial_create_and_close\" class=\"button\" style=\"flex:1;\">" . esc_js(__('Create & Close', 'ial-royalties')) . "</button>';
+            btnHtml += '</div>';
+            $('#publish').after(btnHtml);
+
+            function submitWithRedirect(redirect) {
+                $('<input>').attr({ type:'hidden', name:'ial_post_redirect', value: redirect }).appendTo('#post');
+                $('#post').submit();
+            }
+            $('#ial_create_and_new').on('click', function(){ submitWithRedirect('" . esc_js($new_url) . "'); });
+            $('#ial_create_and_close').on('click', function(){ submitWithRedirect('" . esc_js($list_url) . "'); });
+        });";
+        wp_add_inline_script('jquery-core', $create_script);
+    }
+
     // 3. JS for Edit Screen Buttons
     if ($screen->post_type === 'ial_royalty_record' && $pagenow === 'post.php') {
         wp_enqueue_script('ial-admin-validation', plugin_dir_url(__FILE__) . '../../assets/js/admin-validation.js', array('jquery'), '1.0', true);
@@ -122,6 +148,22 @@ function ial_royalties_admin_assets()
 }
 add_action('admin_enqueue_scripts', 'ial_royalties_admin_assets');
 
+function ial_royalties_redirect_after_save($location, $post_id)
+{
+    if (get_post_type($post_id) !== 'ial_royalty_record' || empty($_POST['ial_post_redirect'])) {
+        return $location;
+    }
+    $allowed = array(
+        admin_url('post-new.php?post_type=ial_royalty_record'),
+        admin_url('edit.php?post_type=ial_royalty_record'),
+    );
+    $target = esc_url_raw($_POST['ial_post_redirect']);
+    if (in_array($target, $allowed, true)) {
+        return $target;
+    }
+    return $location;
+}
+add_filter('redirect_post_location', 'ial_royalties_redirect_after_save', 10, 2);
 
 // Menu Badge for Unpaid items.
 function ial_royalties_add_menu_badge()
