@@ -88,10 +88,18 @@ class IdeaaLab_Royalty_Emails
             $prod_name = $prod_id ? get_the_title($prod_id) : __('Deleted Product', 'ial-royalties');
             $units = (int) get_post_meta($rid, 'units', true);
 
+            $sale_date_raw = get_post_meta($rid, 'sale_date', true);
+            $sale_date = '';
+            if ($sale_date_raw) {
+                $dt = DateTime::createFromFormat('Y-m-d', $sale_date_raw) ?: DateTime::createFromFormat('Ymd', $sale_date_raw);
+                $sale_date = $dt ? $dt->format(get_option('date_format')) : $sale_date_raw;
+            }
+
             $detail_rows[] = array(
-                'product' => $prod_name,
-                'units'   => $units,
-                'amount'  => $amount,
+                'product'   => $prod_name,
+                'units'     => $units,
+                'amount'    => $amount,
+                'sale_date' => $sale_date,
             );
         }
 
@@ -146,6 +154,7 @@ class IdeaaLab_Royalty_Emails
         $html = '<table style="border-collapse:collapse; width:100%; max-width:600px; font-size:14px;">';
         $html .= '<thead><tr style="background:#444; color:#fff;">';
         $html .= '<th style="padding:8px; text-align:left;">' . esc_html__('Product', 'ial-royalties') . '</th>';
+        $html .= '<th style="padding:8px; text-align:center;">' . esc_html__('Date', 'ial-royalties') . '</th>';
         $html .= '<th style="padding:8px; text-align:center;">' . esc_html__('Units', 'ial-royalties') . '</th>';
         $html .= '<th style="padding:8px; text-align:right;">' . esc_html__('Amount', 'ial-royalties') . '</th>';
         $html .= '</tr></thead><tbody>';
@@ -153,6 +162,7 @@ class IdeaaLab_Royalty_Emails
         foreach ($rows as $row) {
             $html .= '<tr style="border-bottom:1px solid #ddd;">';
             $html .= '<td style="padding:6px 8px;">' . esc_html($row['product']) . '</td>';
+            $html .= '<td style="padding:6px 8px; text-align:center;">' . esc_html($row['sale_date']) . '</td>';
             $html .= '<td style="padding:6px 8px; text-align:center;">' . esc_html($row['units']) . '</td>';
             $html .= '<td style="padding:6px 8px; text-align:right;">' . strip_tags(wc_price($row['amount'])) . '</td>';
             $html .= '</tr>';

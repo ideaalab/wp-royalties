@@ -319,7 +319,7 @@ function ial_render_record_metabox($post)
             <td>
                 <label style="margin-right:15px;">
                     <input type="radio" name="record_source" value="automatic" <?php checked($source, 'automatic'); ?>>
-                    <?php esc_html_e('Automatic', 'ial-royalties'); ?>
+                    <?php esc_html_e('Order', 'ial-royalties'); ?>
                 </label>
                 <label>
                     <input type="radio" name="record_source" value="manual" <?php checked($source, 'manual'); ?>>
