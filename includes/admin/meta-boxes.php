@@ -467,14 +467,10 @@ function ial_save_royalties_meta($post_id)
             do_action('ial_royalty_paid_status_changed', $post_id);
         }
 
-        // Auto-generate title from association data
-        $user_id = get_post_meta($post_id, 'collaborator_user', true);
+        // Auto-generate title from product
         $prod_id = get_post_meta($post_id, 'product', true);
-        $user = $user_id ? get_userdata($user_id) : null;
         $prod_name = $prod_id ? get_the_title($prod_id) : '';
-        $title = 'Royalty';
-        if ($user) $title .= ' — ' . $user->display_name;
-        if ($prod_name) $title .= ' — ' . $prod_name;
+        $title = $prod_name ? sprintf('Royalty for %s', $prod_name) : 'Royalty';
         remove_action('save_post', 'ial_save_royalties_meta');
         wp_update_post(array('ID' => $post_id, 'post_title' => $title));
         add_action('save_post', 'ial_save_royalties_meta');

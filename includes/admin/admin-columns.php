@@ -194,6 +194,13 @@ function ial_royalties_remove_assoc_mine_view($views)
 }
 add_filter('views_edit-ial_user_prod_assoc', 'ial_royalties_remove_assoc_mine_view');
 
+function ial_royalties_remove_record_views($views)
+{
+    unset($views['mine'], $views['publish']);
+    return $views;
+}
+add_filter('views_edit-ial_royalty_record', 'ial_royalties_remove_record_views');
+
 // COLUMNS: Registered Royalties (Log)
 function ial_royalties_record_admin_columns($columns)
 {

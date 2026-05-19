@@ -97,12 +97,12 @@ function ial_royalties_admin_assets()
             btnHtml += '</div>';
             $('#publish').after(btnHtml);
 
-            function submitWithRedirect(redirect) {
+            function publishWithRedirect(redirect) {
                 $('<input>').attr({ type:'hidden', name:'ial_post_redirect', value: redirect }).appendTo('#post');
-                $('#post').submit();
+                $('#publish').click();
             }
-            $('#ial_create_and_new').on('click', function(){ submitWithRedirect('" . esc_js($new_url) . "'); });
-            $('#ial_create_and_close').on('click', function(){ submitWithRedirect('" . esc_js($list_url) . "'); });
+            $('#ial_create_and_new').on('click', function(){ publishWithRedirect('" . esc_js($new_url) . "'); });
+            $('#ial_create_and_close').on('click', function(){ publishWithRedirect('" . esc_js($list_url) . "'); });
         });";
         wp_add_inline_script('jquery-core', $create_script);
     }
