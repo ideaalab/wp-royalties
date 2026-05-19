@@ -5,7 +5,7 @@ A specialized financial plugin to automate royalties and commission tracking for
 | | |
 |---|---|
 | **Slug** | `wp-royalties` |
-| **Version** | 3.3.6 |
+| **Version** | 3.3.7 |
 | **Author** | IDEAA Lab — Michael Di Desidero |
 | **Requires WP** | 5.8+ |
 | **Requires PHP** | 7.4+ |
@@ -94,6 +94,10 @@ This plugin ships with [plugin-update-checker](https://github.com/YahnisElsts/pl
 - **Security:** Capability checks (`edit_others_posts`) and nonces for all manual actions and exports.
 
 ## Changelog
+
+### 3.3.7
+
+- **UX:** Auto-fill "Royalty per Unit" from the association's standard rate (fixed types) and auto-calculate "Royalty Total" when units or per-unit values change.
 
 ### 3.3.6
 

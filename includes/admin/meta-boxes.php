@@ -259,14 +259,35 @@ function ial_render_record_metabox($post)
                 var label = sel.data('rate-label');
                 $('#ial_rate_hint').text(label ? '<?php echo esc_js(__('Standard:', 'ial-royalties')); ?> ' + label : '');
             }
-            function updateTotalHint() {
+            function autoFillPerUnit() {
+                var sel = $('#ial_association option:selected');
+                var type = sel.data('type');
+                var rate = parseFloat(sel.data('rate')) || 0;
+                if ((type === 'fixed' || type === 'fixed_per_unit') && rate > 0) {
+                    $('#ial_royalty_per_unit').val(rate.toFixed(2));
+                    autoFillTotal();
+                }
+            }
+            function autoFillTotal() {
                 var units = parseFloat($('#ial_units').val()) || 0;
                 var perUnit = parseFloat($('#ial_royalty_per_unit').val()) || 0;
                 var calc = units * perUnit;
-                $('#ial_total_hint').text(calc > 0 ? '<?php echo esc_js(__('Calculated:', 'ial-royalties')); ?> ' + calc.toFixed(2) : '');
+                if (calc > 0) {
+                    $('#ial_royalty_total').val(calc.toFixed(2));
+                }
+                updateTotalHint();
             }
-            $('#ial_association').on('change', updateRateHint);
-            $('#ial_units, #ial_royalty_per_unit').on('input change', updateTotalHint);
+            function updateTotalHint() {
+                var units = parseFloat($('#ial_units').val()) || 0;
+                var perUnit = parseFloat($('#ial_royalty_per_unit').val()) || 0;
+                var total = parseFloat($('#ial_royalty_total').val()) || 0;
+                var calc = units * perUnit;
+                $('#ial_total_hint').text(calc > 0 && calc !== total ? '<?php echo esc_js(__('Calculated:', 'ial-royalties')); ?> ' + calc.toFixed(2) : '');
+            }
+            $('#ial_association').on('change', function(){ updateRateHint(); autoFillPerUnit(); });
+            $('#ial_units').on('input change', autoFillTotal);
+            $('#ial_royalty_per_unit').on('input change', autoFillTotal);
+            $('#ial_royalty_total').on('input change', updateTotalHint);
             updateRateHint();
             updateTotalHint();
         });
